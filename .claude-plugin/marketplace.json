@@ -1,0 +1,5 @@
+{
+  "name": "opencode-client",
+  "owner": { "name": "OpenCode Agent Client contributors" },
+  "plugins": [{ "name": "opencode-client", "source": "./", "description": "Delegate and supervise OpenCode sessions from Claude Code" }]
+}

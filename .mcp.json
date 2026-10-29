@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "opencode-client": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/bin/opencode-client.js", "mcp"]
+    }
+  }
+}

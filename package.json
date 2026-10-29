@@ -1,0 +1,45 @@
+{
+  "name": "opencode-agent-client",
+  "version": "0.1.0",
+  "description": "Delegate and supervise OpenCode sessions from coding agents through MCP or a JSON CLI",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "opencode-client": "bin/opencode-client.js"
+  },
+  "exports": {
+    ".": "./src/client.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "skills",
+    ".claude-plugin",
+    ".mcp.json",
+    "docs",
+    "README.md",
+    "LICENSE",
+    ".codex-plugin",
+    "INSTALL.md",
+    "scripts/smoke.js",
+    "CONTRIBUTING.md",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check bin/opencode-client.js && node --check src/client.js && node --check src/tools.js && node --check src/mcp.js && node --check src/install.js && node --check src/v2.js && prettier --check \"src/*.js\" \"bin/*.js\"",
+    "smoke": "node scripts/smoke.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "jsonc-parser": "^3.3.1",
+    "smol-toml": "^1.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
+}

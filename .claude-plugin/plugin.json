@@ -1,0 +1,8 @@
+{
+  "name": "opencode-client",
+  "version": "0.1.0",
+  "description": "Delegate and supervise OpenCode sessions through MCP",
+  "license": "MIT",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}
