@@ -8,7 +8,9 @@ The same client works with Codex, Claude Code and other hosts that support local
 
 Requires Node.js 22 or later and an accessible OpenCode server implementing the [documented HTTP API](https://opencode.ai/docs/server/). The client detects the documented v1 API or the v2 API used by OpenCode 2.2.0. Both share the same MCP tools; pagination and question replies differ as described in [usage](docs/usage.md).
 
-Clone this repository into a persistent directory, then:
+Before connecting, **the user must run `opencode serve` manually** (or confirm an existing server), provide the actual server URL, and supply the server password securely through `OPENCODE_SERVER_PASSWORD` or the host's secret mechanism. An installing agent must ask for these steps and wait for them; it must not start the server or assume it is unauthenticated. See [user-run server and password setup](INSTALL.md#user-run-server-and-password-setup). The password must reach the host-launched MCP process; a separate terminal export does not update an already-running app.
+
+Once those steps are complete, clone this repository into a persistent directory, then:
 
 ```sh
 npm ci

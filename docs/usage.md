@@ -2,6 +2,8 @@
 
 All examples run from the client checkout. Replace sample project paths, session IDs and model IDs with discovered values. Shell examples use POSIX quoting; `@file` works across platforms when JSON quoting is inconvenient.
 
+Before these connection examples, complete the [user-run server and password steps](../INSTALL.md#user-run-server-and-password-setup). An installing agent must ask the user to run `opencode serve` (or confirm an existing server), provide its actual URL, and securely configure the password for the agent/MCP environment. It must wait for that input rather than start the server or assume a password is unnecessary.
+
 ## Discover the server
 
 ```sh

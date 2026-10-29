@@ -6,11 +6,14 @@ When a user asks you to install this client, perform the following work within t
 
 1. Confirm Node.js 22+ is available. Use an existing checkout or clone the user-selected repository URL into a persistent directory. No public repository URL is assumed by this document; `OWNER/REPO` in examples is a placeholder.
 2. Run `npm ci` in the checkout. There is no compilation step.
-3. Resolve the intended host (`codex`, `claude`, `cursor`, `vscode`, `gemini`, `opencode`, or an explicit-file MCP host), installation scope and OpenCode API URL from the user's instructions or existing configuration. Use `--scope user` when the user asks for app-wide, global or all-project access for their account. Use `--scope project --target PROJECT` for a shared project installation. Both `install` and `config` require an explicit scope; if the user has not chosen one, ask before proceeding. Never infer scope from the working directory or `--target`. Ask only for information that cannot be resolved. Never embed passwords in URLs or tracked files.
-4. Run `node bin/opencode-client.js doctor --url URL`. It must report a healthy JSON API. Both the documented v1 API and OpenCode v2.2.0 are detected automatically. HTML means the endpoint is a web frontend; HTTP 401 means authentication is needed. Do not treat either as a successful connection.
-5. Run `node bin/opencode-client.js install --agent HOST --scope user --url URL` for app-wide access, or `node bin/opencode-client.js install --agent HOST --scope project --target PROJECT --url URL` for project access, and inspect the returned paths and changes. This is a dry run and creates no files.
-6. If the preview matches the requested installation, repeat with `--apply`. The installation request authorizes these scoped changes; no extra confirmation is needed unless host policy requires it. A conflict stops installation: preserve and report the conflicting entry rather than deleting it automatically.
-7. Reload the host as needed. Check that `opencode_health`, `opencode_projects` and `opencode_models` are exposed and callable. Do not submit a paid task merely to test installation unless the user authorized that test. Report which checks actually ran. Host trust and tool approvals may require user interaction.
+3. Resolve the intended host (`codex`, `claude`, `cursor`, `vscode`, `gemini`, `opencode`, or an explicit-file MCP host) and installation scope. Both `install` and `config` require an explicit scope; if the user has not chosen one, ask before proceeding. Use `--scope user` for app-wide access or `--scope project --target PROJECT` for project access. Never infer scope from the working directory or `--target`.
+4. **Ask the user to start the server manually.** Ask them to run `opencode serve` in a terminal they control and leave it running. Give the sample prompt in [User-run server and password setup](#user-run-server-and-password-setup). Do not start, restart or stop the server on their behalf during agentic installation. If they already have a server running, ask them to confirm it can be reused instead of asking them to start a second one. Reuse an explicit confirmation already given in the current installation.
+5. **Ask the user for the server URL and password.** The URL must be the actual API/server address reported by their server, not an assumed port or web UI address. Have them supply the password through the host's secure secret input or configure `OPENCODE_SERVER_PASSWORD` in the environment that launches the coding agent and MCP process, then confirm it is available. Ask for `OPENCODE_SERVER_USERNAME` if customized. Do not scrape passwords from other processes' environments or startup logs, echo them, embed them in URLs, or write them into tracked files or MCP JSON/TOML. If the user already supplied the URL and securely configured the password for this installation, verify that setup instead of asking again.
+6. **Wait for the user's server and credential setup before connection-dependent work.** Dependency preparation can continue while waiting, but final server configuration and connection checks must wait for the supplied details. Do not guess missing connection details or claim connectivity. In the credential-enabled environment, run `node bin/opencode-client.js doctor --url URL`. It must report a healthy JSON API using the supplied authentication. Both the documented v1 API and OpenCode v2.2.0 are detected automatically. HTML indicates a frontend or wrong API route; HTTP 401 means credentials are missing or rejected. Ask the user to correct the URL/password or how they reach the MCP process, then retry. Do not weaken server authentication to get a passing check.
+7. Run `node bin/opencode-client.js install --agent HOST --scope user --url URL` for app-wide access, or `node bin/opencode-client.js install --agent HOST --scope project --target PROJECT --url URL` for project access, and inspect the returned paths and changes. This is a dry run and creates no files. Use the URL provided by the user.
+8. If the preview matches the requested installation, repeat with `--apply`. The installation request authorizes these scoped changes; no extra confirmation is needed unless host policy requires it. A conflict stops installation: preserve and report the conflicting entry rather than deleting it automatically.
+9. Ask the user to reload/restart the host when needed so the MCP process receives its password environment. Check that `opencode_health`, `opencode_projects` and `opencode_models` are exposed and callable **through MCP**, not only through the standalone CLI. A successful `doctor` call in one shell does not prove that the host-launched MCP process has the same credentials. Do not submit a paid task merely to test installation unless the user authorized that test. Host trust and tool approvals may require user interaction.
+10. Report the server URL, chosen scope, installed paths and checks actually run. Never report the password. If a user-run step is pending, state that installation/connection verification is pending that step rather than marking setup complete.
 
 Example clone command, after replacing the placeholder with the repository's actual location:
 
@@ -19,6 +22,42 @@ git clone https://github.com/OWNER/REPO.git opencode-client
 cd opencode-client
 npm ci
 ```
+
+## User-run server and password setup
+
+The installing agent must make these manual steps part of the conversation, not leave them as an optional prerequisite. Use a request such as:
+
+> Please run `opencode serve` in a terminal you control and leave it running. If you already have a server, confirm that we should use it. Share the server URL printed at startup and provide its password through your host's secure secret input, or set `OPENCODE_SERVER_PASSWORD` in the environment that launches this agent and its MCP process and confirm when ready. If you changed the username, provide that too. Don't paste the password into ordinary chat or public logs.
+
+A local server can be started by the user with, for example:
+
+```sh
+opencode serve --hostname 127.0.0.1 --port 4096
+```
+
+The address above is an example; use the URL from the user's actual server output. OpenCode v2 can generate and print a password at startup. If that version expects the password to be configured beforehand, the user should set `OPENCODE_SERVER_PASSWORD` before running `opencode serve` and provide that same password to the client. Never interpret a missing environment variable as proof that the running server has no password. If it truly has no password, ask the user to configure one or explicitly confirm that they intend to use an unauthenticated server.
+
+For a terminal-launched coding agent, the user can enter the server password with a hidden prompt in the terminal that will launch the agent. These commands do not put the literal password in shell history:
+
+Bash:
+
+```bash
+read -r -s -p "OpenCode server password: " OPENCODE_SERVER_PASSWORD
+printf '\n'
+export OPENCODE_SERVER_PASSWORD
+# Launch/restart the coding agent from this terminal afterward.
+```
+
+Zsh:
+
+```zsh
+read -r -s "OPENCODE_SERVER_PASSWORD?OpenCode server password: "
+printf '\n'
+export OPENCODE_SERVER_PASSWORD
+# Launch/restart the coding agent from this terminal afterward.
+```
+
+For a desktop host or another shell, use its supported secret/environment setup. Exporting a variable in a separate terminal does **not** change the environment of an already-running agent or MCP server. Ask the user to relaunch the host with that environment or use the host's secret mechanism, then resume verification. The installer does not persist the password, and a `.env` file is not automatically loaded. Record any resume instructions without including the secret.
 
 Both commands reject a missing `--scope` before reading or changing host configuration. Pass `--scope user` or `--scope project`, including for dry runs and generated configuration.
 
