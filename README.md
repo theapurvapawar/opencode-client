@@ -13,6 +13,8 @@ Before connecting, **the user must run `opencode serve` manually** (or confirm a
 Once those steps are complete, clone this repository into a persistent directory, then:
 
 ```sh
+git clone https://github.com/theapurvapawar/opencode-client.git
+cd opencode-client
 npm ci
 node bin/opencode-client.js doctor --url http://127.0.0.1:4096
 node bin/opencode-client.js call projects --url http://127.0.0.1:4096

@@ -3,5 +3,6 @@
   "version": "0.1.0",
   "description": "OpenCode task delegation and supervision skill. Register the local MCP server using INSTALL.md.",
   "license": "MIT",
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "homepage": "https://github.com/theapurvapawar/opencode-client"
 }

@@ -4,5 +4,6 @@
   "description": "Delegate and supervise OpenCode sessions through MCP",
   "license": "MIT",
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json"
+  "mcpServers": "./.mcp.json",
+  "homepage": "https://github.com/theapurvapawar/opencode-client"
 }

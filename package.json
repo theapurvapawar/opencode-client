@@ -41,5 +41,13 @@
   },
   "devDependencies": {
     "prettier": "^3.9.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theapurvapawar/opencode-client.git"
+  },
+  "homepage": "https://github.com/theapurvapawar/opencode-client#readme",
+  "bugs": {
+    "url": "https://github.com/theapurvapawar/opencode-client/issues"
   }
 }

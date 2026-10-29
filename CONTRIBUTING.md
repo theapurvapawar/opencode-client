@@ -20,4 +20,4 @@ Run a real-host smoke test when feasible and record the exact versions and opera
 
 Describe the concrete problem, resulting behavior and verification. Link relevant API or host documentation. Note compatibility changes, limitations and any live checks that were not run. Keep dependency changes and unrelated refactoring separate when possible.
 
-Before a public release, maintainers should select the repository URL/package namespace, verify license and package contents, run the test matrix, test Codex and Claude Code loading, and document supported OpenCode versions. The repository is usable from a checkout without npm or marketplace publication.
+The public repository is [theapurvapawar/opencode-client](https://github.com/theapurvapawar/opencode-client). Before a package or marketplace release, maintainers should select the package namespace, verify license and package contents, run the test matrix, test Codex and Claude Code loading, and document supported OpenCode versions. The repository is usable from a checkout without npm or marketplace publication.

@@ -4,7 +4,7 @@
 
 When a user asks you to install this client, perform the following work within that authorization. Do not replace an existing configuration file with a generated example.
 
-1. Confirm Node.js 22+ is available. Use an existing checkout or clone the user-selected repository URL into a persistent directory. No public repository URL is assumed by this document; `OWNER/REPO` in examples is a placeholder.
+1. Confirm Node.js 22+ is available. Use an existing checkout or clone [theapurvapawar/opencode-client](https://github.com/theapurvapawar/opencode-client) into a persistent directory.
 2. Run `npm ci` in the checkout. There is no compilation step.
 3. Resolve the intended host (`codex`, `claude`, `cursor`, `vscode`, `gemini`, `opencode`, or an explicit-file MCP host) and installation scope. Both `install` and `config` require an explicit scope; if the user has not chosen one, ask before proceeding. Use `--scope user` for app-wide access or `--scope project --target PROJECT` for project access. Never infer scope from the working directory or `--target`.
 4. **Ask the user to start the server manually.** Ask them to run `opencode serve` in a terminal they control and leave it running. Give the sample prompt in [User-run server and password setup](#user-run-server-and-password-setup). Do not start, restart or stop the server on their behalf during agentic installation. If they already have a server running, ask them to confirm it can be reused instead of asking them to start a second one. Reuse an explicit confirmation already given in the current installation.
@@ -15,10 +15,10 @@ When a user asks you to install this client, perform the following work within t
 9. Ask the user to reload/restart the host when needed so the MCP process receives its password environment. Check that `opencode_health`, `opencode_projects` and `opencode_models` are exposed and callable **through MCP**, not only through the standalone CLI. A successful `doctor` call in one shell does not prove that the host-launched MCP process has the same credentials. Do not submit a paid task merely to test installation unless the user authorized that test. Host trust and tool approvals may require user interaction.
 10. Report the server URL, chosen scope, installed paths and checks actually run. Never report the password. If a user-run step is pending, state that installation/connection verification is pending that step rather than marking setup complete.
 
-Example clone command, after replacing the placeholder with the repository's actual location:
+Clone the public repository:
 
 ```sh
-git clone https://github.com/OWNER/REPO.git opencode-client
+git clone https://github.com/theapurvapawar/opencode-client.git opencode-client
 cd opencode-client
 npm ci
 ```
