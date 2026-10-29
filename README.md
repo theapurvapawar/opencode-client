@@ -20,16 +20,18 @@ node bin/opencode-client.js call sessions '{"allProjects":true}'
 
 The default URL is `http://127.0.0.1:4096`. Set `OPENCODE_URL` or supply `--url` for a different host, port or API prefix. A web UI URL is not necessarily an API URL: `doctor` requires a JSON health response and reports HTML responses as a configuration error.
 
-Install into the project where your agent works:
+Install once across projects for your user account:
 
 ```sh
-# Preview the files first; replace /path/to/project.
-node bin/opencode-client.js install --agent codex --target /path/to/project --url http://127.0.0.1:4096
-# Apply the reviewed configuration and skill.
-node bin/opencode-client.js install --agent codex --target /path/to/project --url http://127.0.0.1:4096 --apply
+# Preview the app-wide configuration and skill.
+node bin/opencode-client.js install --agent codex --scope user --url http://127.0.0.1:4096
+# Apply the reviewed installation.
+node bin/opencode-client.js install --agent codex --scope user --url http://127.0.0.1:4096 --apply
 ```
 
-Use `--agent claude` for Claude Code. Reload the host and trust the project/MCP server when requested. The installer records absolute executable paths, so keep this checkout and Node installation in place. No build step is required.
+Use `--agent claude` for Claude Code. For project scope, use `--scope project --target /path/to/project` instead of `--scope user`; scope must always be supplied explicitly. Reload the host and trust the project/MCP server when requested. The installer records absolute executable paths, so keep this checkout and Node installation in place. No build step is required.
+
+User scope registers both MCP and the skill in the host's user locations. Codex uses `~/.codex/config.toml` plus `~/.agents/skills`; Claude Code uses `~/.claude.json` plus `~/.claude/skills`. Existing project entries can override user settings; [migration instructions](INSTALL.md#moving-from-project-to-user-scope) explain how to remove duplicates safely. “App-wide” applies to the current account, not other users or cloud machines.
 
 ## Agent integrations
 
@@ -42,10 +44,10 @@ Use `--agent claude` for Claude Code. Reload the host and trust the project/MCP 
 | Gemini CLI | Project MCP config and skill | Writes `.gemini/settings.json` and `.gemini/skills/opencode/SKILL.md` |
 | OpenCode | Local MCP config and skill | Writes `opencode.json` (or existing `opencode.jsonc`) and `.opencode/skills/opencode/SKILL.md` |
 | Windsurf, Cline, Roo Code | MCP configuration generator | Generates config or merges into an explicitly selected settings file using `--config` |
-| Other MCP hosts | Generic stdio MCP | `config --agent generic` prints configuration |
+| Other MCP hosts | Generic stdio MCP | `config --agent generic --scope user` prints configuration |
 | Agents with shell access | JSON CLI and portable skill | Use `call`, `tools`, and `skills/opencode/SKILL.md` |
 
-Adapters generate the hosts' documented formats. Automated protocol/configuration tests do not establish that every host/version has been tested interactively. See [installation](INSTALL.md) for setup, credentials, upgrades and agent-driven installation.
+The paths in the table are for project scope. Codex, Claude Code, Cursor, Gemini and OpenCode also resolve native user paths with `--scope user`; VS Code and other profile-dependent hosts use an explicit absolute `--config` path. Adapters generate the hosts' documented formats. Automated protocol/configuration tests do not establish that every host/version has been tested interactively. See [installation](INSTALL.md) for setup, credentials, upgrades and agent-driven installation.
 
 ## Delegation workflow
 

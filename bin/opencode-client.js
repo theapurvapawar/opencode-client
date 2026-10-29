@@ -12,11 +12,11 @@ const help = `OpenCode agent client (Node.js >=22)
   opencode-client tools                         List tool names and JSON schemas
   opencode-client call <tool> [JSON | @file | -] Call tool, print JSON
   opencode-client doctor [--url URL]            Check JSON API connectivity
-  opencode-client config --agent AGENT          Generate host MCP config
-  opencode-client install --agent AGENT --target DIR [--config FILE] [--apply]
+  opencode-client config --agent AGENT --scope project|user Generate MCP config
+  opencode-client install --agent AGENT --scope project|user [--target DIR] [--config FILE] [--apply]
 
-Options: --url URL (or OPENCODE_URL), --agent, --target, --config, --apply, --help
-Install defaults to dry run. Tool arguments are JSON; '-' reads stdin.
+Options: --url URL (or OPENCODE_URL), --agent, --scope, --target, --config, --apply, --help
+Install and config require an explicit --scope user or --scope project. Install defaults to dry run. Tool arguments are JSON; '-' reads stdin.
 Auth: OPENCODE_SERVER_PASSWORD / OPENCODE_SERVER_USERNAME or OPENCODE_TOKEN.
 See INSTALL.md and docs/usage.md. No mutation is automatically retried.`;
 try {
@@ -25,6 +25,7 @@ try {
     options: {
       url: { type: "string" },
       agent: { type: "string" },
+      scope: { type: "string" },
       target: { type: "string" },
       config: { type: "string" },
       apply: { type: "boolean", default: false },
@@ -39,6 +40,7 @@ try {
     print(
       await install({
         agent: values.agent,
+        scope: values.scope,
         target: values.target,
         configPath: values.config,
         url: values.url || process.env.OPENCODE_URL,
@@ -49,6 +51,7 @@ try {
     print(
       config({
         agent: values.agent,
+        scope: values.scope,
         url: values.url || process.env.OPENCODE_URL,
       }),
     );

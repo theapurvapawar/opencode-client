@@ -4,7 +4,7 @@ The initial implementation was validated on macOS with Node.js 25.6.0 and OpenCo
 
 ## Automated checks
 
-`npm test` passes 25 tests covering:
+The initial release passed 25 tests covering:
 
 - HTTP Basic authentication, URL prefixes and directory encoding; HTML/frontend diagnostics; credential URL rejection.
 - Recoverable session creation errors and no automatic prompt retry.
@@ -28,3 +28,9 @@ The temporary server was stopped after validation. Existing user sessions were n
 Codex and Claude Code configuration and skills were installed into temporary projects and verified for repeat installation. Their interactive UIs and third-party host UIs were not exercised. The Claude local plugin manifests and other host adapters should be checked with the host versions used for a release. V2's API is experimental, so future server releases may require adapter updates.
 
 Code review: skipped (ce-code-review unavailable). The dedicated review worker terminated when workspace credits were exhausted, before producing a completed review receipt. Its confirmed stale-wait, Windows-path and package-content findings were fixed, and a manual source/contract review completed. This is not a claim of an independent completed review.
+
+## User-wide installation update
+
+The current suite passes **34 tests**; `npm run check` also passes. The user-scope update adds tests using temporary home directories for Codex, Claude Code, Cursor, Gemini and OpenCode configuration/skill placement, dry runs, repeated installation, host directory overrides, OpenCode JSONC preservation, skill conflicts, Claude per-project/account setting preservation, and entry-only output that excludes unrelated secrets. VS Code user-profile installation is tested with an explicit configuration path. Project installation tests remain in place. No actual user configuration is changed by these tests.
+
+Explicit-scope regression tests verify that both CLI and library `config`/`install` reject an omitted scope, even with a target or configuration path, and create no files. All project installer tests now specify `scope: "project"`.

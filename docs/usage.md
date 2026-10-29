@@ -89,3 +89,13 @@ That package import applies after installing this repository as a local dependen
 Mutating requests are never retried automatically. If a request times out or loses its response, it may already have executed. Inspect before retrying. If session creation succeeded but prompt submission failed, the error includes the created session ID for recovery. Keep it rather than creating repeated sessions blindly.
 
 HTML from `doctor` usually means a frontend URL or proxy fallback; HTTP 401 means credentials are missing or rejected. HTTP 404 may indicate an unsupported endpoint/API generation. Check the server's `/doc` (v1) or `/openapi.json` (v2) and [server documentation](https://opencode.ai/docs/server/). This client does not discover or bypass a web application's authentication session.
+
+## Install across projects
+
+```sh
+node bin/opencode-client.js config --agent codex --scope user
+node bin/opencode-client.js install --agent codex --scope user
+node bin/opencode-client.js install --agent codex --scope user --apply
+```
+
+Use `--agent claude` for Claude Code or the other supported adapters. `--scope user` installs MCP and the skill for the current account; it does not change how tasks select a server-side project. Keep passing a discovered absolute `directory` for task operations. See [installation scope, paths and migration](../INSTALL.md) for other hosts and project overrides.

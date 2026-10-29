@@ -7,6 +7,7 @@ import {
   unlink,
 } from "node:fs/promises";
 import { dirname, join, resolve, relative, sep, isAbsolute } from "node:path";
+import { homedir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
@@ -53,12 +54,62 @@ const profiles = {
   roo: { key: "mcpServers" },
 };
 
-function settings(agent, url) {
-  const profile = Object.hasOwn(profiles, agent) ? profiles[agent] : undefined;
-  if (!profile)
+function scopedProfile(agent, scope, home, env) {
+  if (scope === undefined)
+    throw new Error("scope is required; pass --scope user or --scope project");
+  if (!["project", "user"].includes(scope))
+    throw new Error("scope must be project or user");
+  const base = Object.hasOwn(profiles, agent) ? profiles[agent] : undefined;
+  if (!base)
     throw new Error(
       `Unsupported agent: ${agent}. Choose ${Object.keys(profiles).join(", ")}.`,
     );
+  if (scope === "project") return base;
+  home = resolve(home);
+  const profile = { ...base, path: null, skill: null };
+  switch (agent) {
+    case "codex":
+      profile.path = join(
+        resolve(env.CODEX_HOME || join(home, ".codex")),
+        "config.toml",
+      );
+      profile.skill = join(home, ".agents/skills/opencode/SKILL.md");
+      break;
+    case "claude": {
+      const directory = resolve(env.CLAUDE_CONFIG_DIR || join(home, ".claude"));
+      profile.path = env.CLAUDE_CONFIG_DIR
+        ? join(directory, ".claude.json")
+        : join(home, ".claude.json");
+      profile.skill = join(directory, "skills/opencode/SKILL.md");
+      break;
+    }
+    case "cursor":
+    case "gemini":
+      profile.path = join(home, base.path);
+      profile.skill = join(home, base.skill);
+      break;
+    case "opencode": {
+      const directory = join(
+        resolve(env.XDG_CONFIG_HOME || join(home, ".config")),
+        "opencode",
+      );
+      profile.path = join(directory, "opencode.json");
+      profile.skill = join(directory, "skills/opencode/SKILL.md");
+      break;
+    }
+    case "vscode":
+      profile.skill = join(home, ".copilot/skills/opencode/SKILL.md");
+      break;
+  }
+  return profile;
+}
+
+function settings(
+  agent,
+  url,
+  { scope, home = homedir(), env = process.env } = {},
+) {
+  const profile = scopedProfile(agent, scope, home, env);
   let parsed;
   try {
     parsed = new URL(url);
@@ -112,11 +163,17 @@ function toml(entry) {
 export function config({
   agent = "generic",
   url = process.env.OPENCODE_URL || "http://127.0.0.1:4096",
+  scope,
+  home = homedir(),
+  env = process.env,
 } = {}) {
-  const { profile, entry } = settings(agent, url);
+  const { profile, entry } = settings(agent, url, { scope, home, env });
   return {
     agent,
-    relativePath: profile.path || null,
+    scope,
+    relativePath: scope === "project" ? profile.path || null : null,
+    path: scope === "user" ? profile.path : null,
+    skillPath: profile.skill || null,
     format: profile.format || "json",
     content:
       profile.format === "toml"
@@ -196,52 +253,79 @@ async function rejectSymlinks(target, path) {
   }
 }
 
-/** Preview or apply project-scoped configuration. Existing entries are never replaced. */
+/** Preview or apply project- or user-scoped configuration. Existing entries are never replaced. */
 export async function install({
   agent,
-  target = process.cwd(),
+  target,
   url = process.env.OPENCODE_URL || "http://127.0.0.1:4096",
   apply = false,
   configPath,
+  scope,
+  home = homedir(),
+  env = process.env,
 } = {}) {
-  const generated = config({ agent, url });
-  const { profile, entry } = settings(generated.agent, url);
+  const generated = config({ agent, url, scope, home, env });
+  const { profile, entry } = settings(generated.agent, url, {
+    scope,
+    home,
+    env,
+  });
+  if (scope === "user" && target !== undefined)
+    throw new Error(
+      "--target applies only to project scope; use --config with an absolute user configuration path",
+    );
   if (!profile.path && !configPath)
     throw new Error(
-      `${generated.agent} supports configuration generation only unless --config identifies the host settings file.`,
+      `${generated.agent} supports configuration generation only unless --config identifies the host settings file${scope === "user" ? " (use the absolute path to the active user profile MCP file)" : ""}.`,
     );
-  target = resolve(target);
-  let relativePath = configPath
-    ? relative(target, resolve(target, configPath))
-    : profile.path;
-  if (
-    isAbsolute(relativePath) ||
-    !relativePath ||
-    relativePath === ".." ||
-    relativePath.startsWith(`..${sep}`)
-  )
-    throw new Error("Configuration file must be inside the target directory");
-  // OpenCode recognizes both formats; preserve an existing JSONC file instead of shadowing it.
-  if (
-    !configPath &&
-    agent === "opencode" &&
-    (await readOptional(join(target, "opencode.jsonc"))) !== null
-  ) {
-    if ((await readOptional(join(target, "opencode.json"))) !== null)
-      throw new Error(
-        "Both opencode.json and opencode.jsonc exist. Select one configuration before installing.",
-      );
-    relativePath = "opencode.jsonc";
+  let path;
+  let relativePath = null;
+  if (scope === "project") {
+    target = resolve(target || process.cwd());
+    relativePath = configPath
+      ? relative(target, resolve(target, configPath))
+      : profile.path;
+    if (
+      isAbsolute(relativePath) ||
+      !relativePath ||
+      relativePath === ".." ||
+      relativePath.startsWith(`..${sep}`)
+    )
+      throw new Error("Configuration file must be inside the target directory");
+    path = join(target, relativePath);
+  } else {
+    if (configPath && !isAbsolute(configPath))
+      throw new Error("User --config must be an absolute path");
+    path = configPath ? resolve(configPath) : profile.path;
+    target = resolve(home);
   }
-  const path = join(target, relativePath);
-  await rejectSymlinks(target, path);
+  if (!configPath && agent === "opencode") {
+    const jsonc = join(dirname(path), "opencode.jsonc");
+    if ((await readOptional(jsonc)) !== null) {
+      if ((await readOptional(path)) !== null)
+        throw new Error(
+          "Both opencode.json and opencode.jsonc exist. Select one configuration before installing.",
+        );
+      path = jsonc;
+      if (scope === "project") relativePath = relative(target, path);
+    }
+  }
+  const rootFor = (file) => {
+    const inside = relative(target, file);
+    return scope === "project" ||
+      (!isAbsolute(inside) && inside !== ".." && !inside.startsWith(`..${sep}`))
+      ? target
+      : dirname(file);
+  };
+  await rejectSymlinks(rootFor(path), path);
   const original = await readOptional(path);
   const content =
     original === null ? generated.content : merge(original, profile, entry);
-  const pending = [{ path, original, content }];
+  const pending = [{ path, original, content, root: rootFor(path) }];
   if (profile.skill) {
-    const skillPath = join(target, profile.skill);
-    await rejectSymlinks(target, skillPath);
+    const skillPath =
+      scope === "user" ? profile.skill : join(target, profile.skill);
+    await rejectSymlinks(rootFor(skillPath), skillPath);
     const oldSkill = await readOptional(skillPath);
     const skill = await readFile(
       join(root, "skills/opencode/SKILL.md"),
@@ -251,18 +335,24 @@ export async function install({
       throw new Error(
         `Skill already exists with different content: ${skillPath}. Update or remove it explicitly.`,
       );
-    pending.push({ path: skillPath, original: oldSkill, content: skill });
+    pending.push({
+      path: skillPath,
+      original: oldSkill,
+      content: skill,
+      root: rootFor(skillPath),
+    });
   }
   // All conflicts and parse errors are checked before the first write.
-  const files = pending.map((item) => ({
+  const files = pending.map((item, index) => ({
     path: item.path,
     changed: item.original !== item.content,
-    content: item.content,
+    content: scope === "user" && index === 0 ? generated.content : item.content,
+    ...(scope === "user" && index === 0 ? { preview: "entry-only" } : {}),
   }));
   if (apply) {
     for (const [index, item] of pending.entries()) {
       if (!files[index].changed) continue;
-      await rejectSymlinks(target, item.path);
+      await rejectSymlinks(item.root, item.path);
       if ((await readOptional(item.path)) !== item.original)
         throw new Error(
           `Configuration changed during installation: ${item.path}. Retry after reviewing it.`,
@@ -286,8 +376,14 @@ export async function install({
   }
   return {
     agent: generated.agent,
+    scope,
     applied: apply,
     files,
-    config: { ...generated, relativePath, content },
+    config: {
+      ...generated,
+      relativePath,
+      path,
+      content: scope === "user" ? generated.content : content,
+    },
   };
 }

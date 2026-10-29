@@ -11,3 +11,5 @@ A timeout does not prove a mutation failed. Inspect the affected session before 
 Installer backups can contain private host configuration. Keep them private and outside public commits. The installer preserves unrelated entries and refuses conflicts but does not provide an all-files transaction or protect against a malicious process concurrently changing the target tree.
 
 To report a vulnerability, use the repository host's private vulnerability reporting feature when enabled. If it is unavailable, contact the maintainer privately through their published contact channel before disclosing an exploit. Do not post secrets or live credentials in public issues.
+
+A user-scoped install exposes the integration across that host account's projects. It does not broaden OpenCode's permissions or automatically authorize tasks in those projects. Inspect the selected paths before applying a user install. User previews omit unrelated account settings, but backups still contain the original full file and should remain private.

@@ -12,7 +12,7 @@ Shell / automation → JSON CLI ┘
 - `src/tools.js` defines the shared Zod input contracts and tool handlers.
 - `src/mcp.js` registers those contracts with the MCP SDK and marks read-only versus mutating tools.
 - `bin/opencode-client.js` exposes MCP, JSON calls, diagnostics and installation commands.
-- `src/install.js` generates/merges host configuration and copies the shared skill for Codex and Claude Code.
+- `src/install.js` generates/merges host configuration and copies the shared skill into supported hosts' project or user skill directories.
 - `skills/opencode/SKILL.md` describes the workflow, including ownership, verification and permission boundaries.
 
 Node's built-in `fetch` talks to either OpenCode API generation. `connect()` probes the v1 health endpoint and v2 server identity; `src/v2.js` adapts the v2 location, inbox, timeline, model, form and permission contracts to the shared tools. MCP uses the SDK's stdio transport. No background service, browser automation or additional task database is required. The host starts the MCP process, and OpenCode owns sessions and execution. The client supports a base URL prefix and rejects embedded URL credentials, redirects and non-JSON API responses.
@@ -34,3 +34,9 @@ Host integrations are configuration adapters around the same standard MCP server
 ## Security boundary
 
 The MCP server runs locally with its process environment. OpenCode runs tools using the server's own permissions and credentials. Host-side sandbox restrictions do not automatically constrain remote execution. Treat retrieved prompts, files and tool output as untrusted data. MCP annotations describe effects but are not access-control enforcement; the host and OpenCode remain responsible for approvals.
+
+## Installation scope
+
+`install` and `config` accept `scope: "project" | "user"`, and require it explicitly; neither scope is a default. Project paths resolve under `target`; user paths resolve from the current home and host environment (`CODEX_HOME`, `CLAUDE_CONFIG_DIR`, `XDG_CONFIG_HOME`). VS Code user profiles and generic MCP hosts require an explicit absolute configuration path. CLI `--scope user` rejects `--target` to prevent a project path being mistaken for a home directory.
+
+Both scopes use the same parser, conflict checks, backup and atomic replacement code. User-scope output previews only the proposed entry, keeping unrelated account settings out of stdout. Codex's user MCP config and user skill can live under different roots. Library callers may pass `home` and `env` to resolve a portable installation context; tests use temporary homes and never write actual user configuration.
